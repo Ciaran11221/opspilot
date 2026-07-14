@@ -1,0 +1,1011 @@
+[
+  {
+    "id": "00u000046",
+    "username": "cian.brennan46",
+    "email": "cian.brennan46@northwind-demo.com",
+    "displayName": "Cian Brennan",
+    "department": "Support",
+    "title": "Finance Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-13T00:00:00Z",
+    "created": "2025-09-29T00:00:00Z",
+    "groups": [
+      "Okta-Super-Admins",
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000024",
+    "username": "sean.dunne24",
+    "email": "sean.dunne24@northwind-demo.com",
+    "displayName": "Sean Dunne",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-22T00:00:00Z",
+    "created": "2024-11-25T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000043",
+    "username": "aoife.byrne43",
+    "email": "aoife.byrne43@northwind-demo.com",
+    "displayName": "Aoife Byrne",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-03T00:00:00Z",
+    "created": "2025-08-20T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000006",
+    "username": "cormac.walsh6",
+    "email": "cormac.walsh6@northwind-demo.com",
+    "displayName": "Cormac Walsh",
+    "department": "Engineering",
+    "title": "Account Executive",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-12T00:00:00Z",
+    "created": "2022-07-25T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000039",
+    "username": "fionn.brennan39",
+    "email": "fionn.brennan39@northwind-demo.com",
+    "displayName": "Fionn Brennan",
+    "department": "Marketing",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-10T00:00:00Z",
+    "created": "2022-07-04T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000008",
+    "username": "saoirse.fitzgerald8",
+    "email": "saoirse.fitzgerald8@northwind-demo.com",
+    "displayName": "Saoirse Fitzgerald",
+    "department": "IT",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-12T00:00:00Z",
+    "created": "2023-03-19T00:00:00Z",
+    "groups": [
+      "Domain-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000042",
+    "username": "sean.dunne42",
+    "email": "sean.dunne42@northwind-demo.com",
+    "displayName": "Sean Dunne",
+    "department": "Sales",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-16T00:00:00Z",
+    "created": "2025-02-18T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": false,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000026",
+    "username": "declan.ryan26",
+    "email": "declan.ryan26@northwind-demo.com",
+    "displayName": "Declan Ryan",
+    "department": "IT",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-10T00:00:00Z",
+    "created": "2024-11-24T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": false,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000002",
+    "username": "niamh.gallagher2",
+    "email": "niamh.gallagher2@northwind-demo.com",
+    "displayName": "Niamh Gallagher",
+    "department": "Marketing",
+    "title": "IT Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-11T00:00:00Z",
+    "created": "2024-01-03T00:00:00Z",
+    "groups": [
+      "Okta-Super-Admins",
+      "Domain-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000009",
+    "username": "ciara.connolly9",
+    "email": "ciara.connolly9@northwind-demo.com",
+    "displayName": "Ciara Connolly",
+    "department": "IT",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-14T00:00:00Z",
+    "created": "2022-11-09T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "Okta-Super-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000048",
+    "username": "grainne.hogan48",
+    "email": "grainne.hogan48@northwind-demo.com",
+    "displayName": "Grainne Hogan",
+    "department": "Finance",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-24T00:00:00Z",
+    "created": "2023-03-11T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000056",
+    "username": "cian.hogan56",
+    "email": "cian.hogan56@northwind-demo.com",
+    "displayName": "Cian Hogan",
+    "department": "IT",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-30T00:00:00Z",
+    "created": "2024-03-16T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000031",
+    "username": "fionn.dunne31",
+    "email": "fionn.dunne31@northwind-demo.com",
+    "displayName": "Fionn Dunne",
+    "department": "Engineering",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-01T00:00:00Z",
+    "created": "2023-03-15T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000013",
+    "username": "saoirse.walsh13",
+    "email": "saoirse.walsh13@northwind-demo.com",
+    "displayName": "Saoirse Walsh",
+    "department": "Sales",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-02T00:00:00Z",
+    "created": "2024-09-29T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000051",
+    "username": "ciara.connolly51",
+    "email": "ciara.connolly51@northwind-demo.com",
+    "displayName": "Ciara Connolly",
+    "department": "Sales",
+    "title": "Sys Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-05T00:00:00Z",
+    "created": "2025-07-23T00:00:00Z",
+    "groups": [
+      "AWS-Root-Access",
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000005",
+    "username": "tadhg.byrne5",
+    "email": "tadhg.byrne5@northwind-demo.com",
+    "displayName": "Tadhg Byrne",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-14T00:00:00Z",
+    "created": "2024-11-18T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000015",
+    "username": "saoirse.nolan15",
+    "email": "saoirse.nolan15@northwind-demo.com",
+    "displayName": "Saoirse Nolan",
+    "department": "Marketing",
+    "title": "Account Executive",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-20T00:00:00Z",
+    "created": "2023-12-23T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000041",
+    "username": "tadhg.hogan41",
+    "email": "tadhg.hogan41@northwind-demo.com",
+    "displayName": "Tadhg Hogan",
+    "department": "Support",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-19T00:00:00Z",
+    "created": "2023-04-10T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000049",
+    "username": "ciara.ryan49",
+    "email": "ciara.ryan49@northwind-demo.com",
+    "displayName": "Ciara Ryan",
+    "department": "People",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-02T00:00:00Z",
+    "created": "2024-12-03T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000044",
+    "username": "declan.fitzgerald44",
+    "email": "declan.fitzgerald44@northwind-demo.com",
+    "displayName": "Declan Fitzgerald",
+    "department": "Finance",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-15T00:00:00Z",
+    "created": "2025-06-24T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000017",
+    "username": "eoin.murphy17",
+    "email": "eoin.murphy17@northwind-demo.com",
+    "displayName": "Eoin Murphy",
+    "department": "IT",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-31T00:00:00Z",
+    "created": "2025-12-21T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000019",
+    "username": "saoirse.nolan19",
+    "email": "saoirse.nolan19@northwind-demo.com",
+    "displayName": "Saoirse Nolan",
+    "department": "Finance",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-23T00:00:00Z",
+    "created": "2024-10-17T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000012",
+    "username": "orla.byrne12",
+    "email": "orla.byrne12@northwind-demo.com",
+    "displayName": "Orla Byrne",
+    "department": "Support",
+    "title": "IT Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-12T00:00:00Z",
+    "created": "2022-08-14T00:00:00Z",
+    "groups": [
+      "Billing-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000037",
+    "username": "sinead.murphy37",
+    "email": "sinead.murphy37@northwind-demo.com",
+    "displayName": "Sinead Murphy",
+    "department": "IT",
+    "title": "IT Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-02T00:00:00Z",
+    "created": "2022-07-17T00:00:00Z",
+    "groups": [
+      "Domain-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000027",
+    "username": "niamh.healy27",
+    "email": "niamh.healy27@northwind-demo.com",
+    "displayName": "Niamh Healy",
+    "department": "Engineering",
+    "title": "Finance Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-07T00:00:00Z",
+    "created": "2025-12-26T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "AWS-Root-Access",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000010",
+    "username": "roisin.osullivan10",
+    "email": "roisin.osullivan10@northwind-demo.com",
+    "displayName": "Roisin OSullivan",
+    "department": "Support",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-10T00:00:00Z",
+    "created": "2025-07-19T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000023",
+    "username": "cian.brennan23",
+    "email": "cian.brennan23@northwind-demo.com",
+    "displayName": "Cian Brennan",
+    "department": "Engineering",
+    "title": "IT Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2025-12-19T00:00:00Z",
+    "created": "2023-08-06T00:00:00Z",
+    "groups": [
+      "Okta-Super-Admins",
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000054",
+    "username": "padraig.byrne54",
+    "email": "padraig.byrne54@northwind-demo.com",
+    "displayName": "Padraig Byrne",
+    "department": "Finance",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-03T00:00:00Z",
+    "created": "2023-10-24T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000038",
+    "username": "maeve.kelly38",
+    "email": "maeve.kelly38@northwind-demo.com",
+    "displayName": "Maeve Kelly",
+    "department": "Engineering",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-05T00:00:00Z",
+    "created": "2023-05-31T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "Billing-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000021",
+    "username": "ronan.osullivan21",
+    "email": "ronan.osullivan21@northwind-demo.com",
+    "displayName": "Ronan OSullivan",
+    "department": "Marketing",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-10T00:00:00Z",
+    "created": "2022-07-15T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000035",
+    "username": "ronan.ryan35",
+    "email": "ronan.ryan35@northwind-demo.com",
+    "displayName": "Ronan Ryan",
+    "department": "Marketing",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-28T00:00:00Z",
+    "created": "2023-12-19T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000057",
+    "username": "tadhg.healy57",
+    "email": "tadhg.healy57@northwind-demo.com",
+    "displayName": "Tadhg Healy",
+    "department": "Support",
+    "title": "Account Executive",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-05T00:00:00Z",
+    "created": "2022-07-24T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000050",
+    "username": "padraig.murphy50",
+    "email": "padraig.murphy50@northwind-demo.com",
+    "displayName": "Padraig Murphy",
+    "department": "IT",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-15T00:00:00Z",
+    "created": "2022-07-20T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000047",
+    "username": "grainne.ryan47",
+    "email": "grainne.ryan47@northwind-demo.com",
+    "displayName": "Grainne Ryan",
+    "department": "People",
+    "title": "Account Executive",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-18T00:00:00Z",
+    "created": "2024-06-10T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": false,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000029",
+    "username": "cormac.doyle29",
+    "email": "cormac.doyle29@northwind-demo.com",
+    "displayName": "Cormac Doyle",
+    "department": "Support",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-04-10T00:00:00Z",
+    "created": "2023-04-06T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000052",
+    "username": "orla.osullivan52",
+    "email": "orla.osullivan52@northwind-demo.com",
+    "displayName": "Orla OSullivan",
+    "department": "People",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-31T00:00:00Z",
+    "created": "2024-12-11T00:00:00Z",
+    "groups": [
+      "Domain-Admins",
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": false,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000032",
+    "username": "liam.walsh32",
+    "email": "liam.walsh32@northwind-demo.com",
+    "displayName": "Liam Walsh",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-08T00:00:00Z",
+    "created": "2023-01-20T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000045",
+    "username": "liam.brennan45",
+    "email": "liam.brennan45@northwind-demo.com",
+    "displayName": "Liam Brennan",
+    "department": "IT",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-09T00:00:00Z",
+    "created": "2023-01-05T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000055",
+    "username": "maeve.dunne55",
+    "email": "maeve.dunne55@northwind-demo.com",
+    "displayName": "Maeve Dunne",
+    "department": "Sales",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-13T00:00:00Z",
+    "created": "2025-08-10T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000003",
+    "username": "maeve.walsh3",
+    "email": "maeve.walsh3@northwind-demo.com",
+    "displayName": "Maeve Walsh",
+    "department": "Marketing",
+    "title": "Finance Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-26T00:00:00Z",
+    "created": "2024-11-10T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "Okta-Super-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000022",
+    "username": "maeve.brennan22",
+    "email": "maeve.brennan22@northwind-demo.com",
+    "displayName": "Maeve Brennan",
+    "department": "Sales",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-19T00:00:00Z",
+    "created": "2024-08-28T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000007",
+    "username": "ciara.dunne7",
+    "email": "ciara.dunne7@northwind-demo.com",
+    "displayName": "Ciara Dunne",
+    "department": "IT",
+    "title": "Super Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-11T00:00:00Z",
+    "created": "2024-04-06T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "active_elevated"
+  },
+  {
+    "id": "00u000025",
+    "username": "saoirse.kelly25",
+    "email": "saoirse.kelly25@northwind-demo.com",
+    "displayName": "Saoirse Kelly",
+    "department": "Sales",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-27T00:00:00Z",
+    "created": "2025-08-28T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000030",
+    "username": "grainne.byrne30",
+    "email": "grainne.byrne30@northwind-demo.com",
+    "displayName": "Grainne Byrne",
+    "department": "Marketing",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-04-03T00:00:00Z",
+    "created": "2025-09-08T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000033",
+    "username": "liam.murphy33",
+    "email": "liam.murphy33@northwind-demo.com",
+    "displayName": "Liam Murphy",
+    "department": "People",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-25T00:00:00Z",
+    "created": "2024-12-10T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000014",
+    "username": "grainne.murphy14",
+    "email": "grainne.murphy14@northwind-demo.com",
+    "displayName": "Grainne Murphy",
+    "department": "Engineering",
+    "title": "Sys Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2025-12-25T00:00:00Z",
+    "created": "2025-10-26T00:00:00Z",
+    "groups": [
+      "M365-Global-Admins",
+      "Okta-Super-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000036",
+    "username": "grainne.hogan36",
+    "email": "grainne.hogan36@northwind-demo.com",
+    "displayName": "Grainne Hogan",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-03-28T00:00:00Z",
+    "created": "2025-08-22T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000018",
+    "username": "roisin.connolly18",
+    "email": "roisin.connolly18@northwind-demo.com",
+    "displayName": "Roisin Connolly",
+    "department": "Engineering",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-25T00:00:00Z",
+    "created": "2023-02-28T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000053",
+    "username": "declan.doyle53",
+    "email": "declan.doyle53@northwind-demo.com",
+    "displayName": "Declan Doyle",
+    "department": "IT",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-24T00:00:00Z",
+    "created": "2024-01-16T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000001",
+    "username": "cormac.murphy1",
+    "email": "cormac.murphy1@northwind-demo.com",
+    "displayName": "Cormac Murphy",
+    "department": "Marketing",
+    "title": "Finance Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-17T00:00:00Z",
+    "created": "2022-06-05T00:00:00Z",
+    "groups": [
+      "AWS-Root-Access",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000058",
+    "username": "grainne.brennan58",
+    "email": "grainne.brennan58@northwind-demo.com",
+    "displayName": "Grainne Brennan",
+    "department": "Finance",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-27T00:00:00Z",
+    "created": "2023-08-12T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000020",
+    "username": "grainne.hogan20",
+    "email": "grainne.hogan20@northwind-demo.com",
+    "displayName": "Grainne Hogan",
+    "department": "People",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-11T00:00:00Z",
+    "created": "2025-09-29T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000059",
+    "username": "maeve.dunne59",
+    "email": "maeve.dunne59@northwind-demo.com",
+    "displayName": "Maeve Dunne",
+    "department": "Support",
+    "title": "Admin",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-10T00:00:00Z",
+    "created": "2022-08-27T00:00:00Z",
+    "groups": [
+      "AWS-Root-Access",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000040",
+    "username": "orla.walsh40",
+    "email": "orla.walsh40@northwind-demo.com",
+    "displayName": "Orla Walsh",
+    "department": "Support",
+    "title": "IT Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2026-02-02T00:00:00Z",
+    "created": "2022-07-09T00:00:00Z",
+    "groups": [
+      "Okta-Super-Admins",
+      "Domain-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000034",
+    "username": "declan.gallagher34",
+    "email": "declan.gallagher34@northwind-demo.com",
+    "displayName": "Declan Gallagher",
+    "department": "IT",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-05T00:00:00Z",
+    "created": "2024-03-08T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000000",
+    "username": "tadhg.hogan0",
+    "email": "tadhg.hogan0@northwind-demo.com",
+    "displayName": "Tadhg Hogan",
+    "department": "Finance",
+    "title": "Finance Manager",
+    "status": "ACTIVE",
+    "lastLogin": "2025-11-25T00:00:00Z",
+    "created": "2022-06-05T00:00:00Z",
+    "groups": [
+      "Okta-Super-Admins",
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_elevated"
+  },
+  {
+    "id": "00u000004",
+    "username": "sinead.fitzgerald4",
+    "email": "sinead.fitzgerald4@northwind-demo.com",
+    "displayName": "Sinead Fitzgerald",
+    "department": "Engineering",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-01-27T00:00:00Z",
+    "created": "2023-09-14T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "inactive_standard"
+  },
+  {
+    "id": "00u000011",
+    "username": "padraig.healy11",
+    "email": "padraig.healy11@northwind-demo.com",
+    "displayName": "Padraig Healy",
+    "department": "People",
+    "title": "Support Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-13T00:00:00Z",
+    "created": "2025-09-30T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000028",
+    "username": "eoin.byrne28",
+    "email": "eoin.byrne28@northwind-demo.com",
+    "displayName": "Eoin Byrne",
+    "department": "Finance",
+    "title": "Employee",
+    "status": "ACTIVE",
+    "lastLogin": "2026-06-15T00:00:00Z",
+    "created": "2024-06-04T00:00:00Z",
+    "groups": [
+      "All-Staff",
+      "VPN-Users"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  },
+  {
+    "id": "00u000016",
+    "username": "cormac.hogan16",
+    "email": "cormac.hogan16@northwind-demo.com",
+    "displayName": "Cormac Hogan",
+    "department": "Marketing",
+    "title": "Analyst",
+    "status": "ACTIVE",
+    "lastLogin": "2026-07-02T00:00:00Z",
+    "created": "2024-06-10T00:00:00Z",
+    "groups": [
+      "All-Staff"
+    ],
+    "mfaEnrolled": true,
+    "_scenarioTag": "normal"
+  }
+]

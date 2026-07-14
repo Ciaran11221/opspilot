@@ -1,0 +1,7 @@
+SamAccountName,Mail,Full Name,Dept,Job Title,Enabled,Last Sign-In,Member Of
+jsmith,j.smith@acme.io,Jane Smith,Finance,Billing Admin,Active,03/12/2026,Finance-Team;Billing-Admins
+bwilson,b.wilson@acme.io,Bob Wilson,IT,Sys Admin,Active,2026-01-15,IT-Staff;Domain-Admins
+kchen,k.chen@acme.io,Kelly Chen,Sales,Account Executive,Active,2026-07-10,Sales-Team
+mgarcia,m.garcia@acme.io,Maria Garcia,Support,Support Analyst,Disabled,11/02/2025,Support-Team
+tlee,t.lee@acme.io,Tom Lee,Engineering,Engineer,Active,,Eng-Team
+rpatel,r.patel@acme.io,Raj Patel,IT,IT Root Access,Active,2026-02-01,IT-Staff;AWS-Root

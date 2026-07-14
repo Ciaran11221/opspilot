@@ -1,0 +1,38 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- PyInstaller build output ---
+# frontend/dist is tracked on purpose (it's source, not a build artifact) -
+# only the PyInstaller output directories are ignored. Build with
+# `pyinstaller --distpath exe-dist ...` to avoid any path collision.
+exe-dist/
+*.spec
+backend/build/
+
+# --- Environment / secrets ---
+.env
+.env.local
+*.pem
+*.key
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- Node (only relevant if the frontend is ever converted to a real build) ---
+node_modules/

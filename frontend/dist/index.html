@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpsPilot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e12;
+    --panel: #111620;
+    --panel-2: #161c28;
+    --line: #232b3a;
+    --line-soft: #1a2130;
+    --text: #e7ebf3;
+    --text-dim: #8993a8;
+    --text-faint: #5b6478;
+    --amber: #f2a83c;
+    --amber-dim: #7a5a24;
+    --green: #4fd88a;
+    --red: #f2604a;
+    --blue: #5aa7ff;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  .fade-in { animation: fadeIn .25s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .pulse-dot { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+  textarea:focus, input:focus { outline: none; }
+  .trace-line { border-left: 2px solid var(--line); }
+  .trace-line.active { border-left: 2px solid var(--amber); }
+</style>
+</head>
+<body class="h-screen overflow-hidden">
+
+<div id="app" class="h-full flex flex-col"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useRef, useEffect } = React;
+
+// ---------- Icons (inline, no external icon font dependency) ----------
+const Icon = {
+  bolt: () => React.createElement('svg', {viewBox:'0 0 24 24', width:16, height:16, fill:'none', stroke:'currentColor', strokeWidth:2},
+    React.createElement('path', {d:'M13 2L4 14h6l-1 8 9-12h-6l1-8z'})),
+  tool: () => React.createElement('svg', {viewBox:'0 0 24 24', width:14, height:14, fill:'none', stroke:'currentColor', strokeWidth:2},
+    React.createElement('path', {d:'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.77z'})),
+  check: () => React.createElement('svg', {viewBox:'0 0 24 24', width:14, height:14, fill:'none', stroke:'currentColor', strokeWidth:2},
+    React.createElement('path', {d:'M20 6L9 17l-5-5'})),
+  doc: () => React.createElement('svg', {viewBox:'0 0 24 24', width:16, height:16, fill:'none', stroke:'currentColor', strokeWidth:2},
+    React.createElement('path', {d:'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'}),
+    React.createElement('path', {d:'M14 2v6h6'})),
+  alert: () => React.createElement('svg', {viewBox:'0 0 24 24', width:14, height:14, fill:'none', stroke:'currentColor', strokeWidth:2},
+    React.createElement('path', {d:'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'}),
+    React.createElement('line', {x1:12, y1:9, x2:12, y2:13}),
+    React.createElement('line', {x1:12, y1:17, x2:12.01, y2:17})),
+};
+
+const EXAMPLE_PROMPTS = [
+  "Find inactive accounts with elevated permissions and draft offboarding tickets for each.",
+  "Which open tickets are at SLA risk this week?",
+  "Give me an account hygiene summary for elevated accounts.",
+];
+
+function StepIcon({ type }) {
+  const map = {
+    plan: { icon: Icon.bolt, color: 'var(--amber)' },
+    tool_call: { icon: Icon.tool, color: 'var(--blue)' },
+    tool_result: { icon: Icon.check, color: 'var(--green)' },
+    final: { icon: Icon.check, color: 'var(--green)' },
+    error: { icon: Icon.alert, color: 'var(--red)' },
+  };
+  const cfg = map[type] || map.plan;
+  return React.createElement('span', { style: { color: cfg.color, display: 'inline-flex' } }, React.createElement(cfg.icon));
+}
+
+function TraceStep({ step, isLast, isStreaming }) {
+  const labels = {
+    plan: 'Reasoning',
+    tool_call: 'Tool call',
+    tool_result: 'Result',
+    final: 'Answer ready',
+    error: 'Error',
+  };
+  return React.createElement('div', { className: `trace-line pl-3 pb-4 fade-in ${isLast && isStreaming ? 'active' : ''}` },
+    React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+      React.createElement(StepIcon, { type: step.type }),
+      React.createElement('span', { className: 'mono text-[11px] uppercase tracking-wider', style:{color:'var(--text-faint)'} }, labels[step.type] || step.type),
+      step.name && React.createElement('span', { className: 'mono text-[12px] px-1.5 py-0.5 rounded', style:{background:'var(--panel-2)', color:'var(--blue)'} }, step.name)
+    ),
+    step.type === 'plan' && React.createElement('p', { className: 'text-[13.5px] leading-relaxed', style:{color:'var(--text)'} }, step.text),
+    step.type === 'tool_call' && React.createElement('pre', { className: 'mono text-[12px] p-2 rounded overflow-x-auto', style:{background:'var(--panel-2)', color:'var(--text-dim)'} }, JSON.stringify(step.input, null, 2)),
+    step.type === 'tool_result' && React.createElement(ResultSummary, { step }),
+    step.type === 'final' && React.createElement('p', { className: 'text-[13.5px] leading-relaxed', style:{color:'var(--text)'} }, step.text),
+    step.type === 'error' && React.createElement('p', { className: 'text-[13.5px]', style:{color:'var(--red)'} }, step.text),
+  );
+}
+
+function ResultSummary({ step }) {
+  const r = step.result || {};
+  let summary = null;
+  if (typeof r.count === 'number') {
+    summary = `${r.count} record${r.count === 1 ? '' : 's'} matched`;
+  } else if (r.error) {
+    summary = `Error: ${r.error}`;
+  } else if (r.reportType) {
+    summary = `Drafted "${r.title}"`;
+  }
+  const [open, setOpen] = useState(false);
+  return React.createElement('div', null,
+    React.createElement('p', { className: 'text-[13px]', style:{color:'var(--text-dim)'} }, summary),
+    React.createElement('button', {
+      className: 'mono text-[11px] mt-1', style:{color:'var(--text-faint)'},
+      onClick: () => setOpen(!open)
+    }, open ? '\u2212 hide raw result' : '+ show raw result'),
+    open && React.createElement('pre', { className: 'mono text-[11px] p-2 rounded mt-1 overflow-x-auto max-h-48 overflow-y-auto', style:{background:'var(--panel-2)', color:'var(--text-dim)'} }, JSON.stringify(r, null, 2))
+  );
+}
+
+function ArtifactCard({ artifact }) {
+  if (!artifact) return null;
+  return React.createElement('div', { className: 'rounded-lg p-4 fade-in', style:{background:'var(--panel-2)', border:'1px solid var(--amber-dim)'} },
+    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+      React.createElement(Icon.doc),
+      React.createElement('span', { className: 'text-[13px] font-medium' }, artifact.title),
+      React.createElement('span', { className: 'mono text-[10px] px-1.5 py-0.5 rounded ml-auto', style:{background:'var(--panel)', color:'var(--amber)'} }, artifact.reportType)
+    ),
+    React.createElement('pre', { className: 'mono text-[12px] whitespace-pre-wrap leading-relaxed', style:{color:'var(--text)'} }, artifact.body),
+    React.createElement('p', { className: 'mono text-[10px] mt-3', style:{color:'var(--text-faint)'} }, artifact.status)
+  );
+}
+
+function MappingReport({ report }) {
+  if (!report) return null;
+  if (report.error) {
+    return React.createElement('p', { className: 'text-[12px] mt-1', style:{color:'var(--red)'} }, report.error);
+  }
+  return React.createElement('div', { className: 'mt-2 fade-in' },
+    React.createElement('p', { className: 'text-[12px] mb-1', style:{color:'var(--green)'} }, `${report.row_count} rows loaded`),
+    React.createElement('div', { className: 'space-y-0.5' },
+      report.column_mapping.map((m, i) => React.createElement('div', { key: i, className: 'flex items-center gap-2 text-[11px] mono' },
+        React.createElement('span', { style:{color: m.header ? 'var(--text-dim)' : 'var(--text-faint)', width: '90px', flexShrink: 0} }, m.field),
+        React.createElement('span', { style:{color:'var(--text-faint)'} }, '\u2192'),
+        m.header
+          ? React.createElement('span', { style:{color:'var(--text)'} }, m.header, m.confidence === 'fuzzy' && React.createElement('span', {style:{color:'var(--amber)', marginLeft:'4px'}}, '(fuzzy match)'))
+          : React.createElement('span', { style:{color:'var(--text-faint)'} }, 'not found')
+      ))
+    ),
+    report.warnings && report.warnings.length > 0 && React.createElement('div', { className: 'mt-2 space-y-1' },
+      report.warnings.map((w, i) => React.createElement('p', { key: i, className: 'text-[11px] flex gap-1.5', style:{color:'var(--amber)'} },
+        React.createElement('span', null, '\u26A0'), w
+      ))
+    )
+  );
+}
+
+function UploadRow({ label, kind, report, uploading, onUpload }) {
+  const inputRef = useRef(null);
+  return React.createElement('div', { className: 'p-3 rounded mb-2', style:{background:'var(--panel)', border:'1px solid var(--line)'} },
+    React.createElement('div', { className: 'flex items-center justify-between' },
+      React.createElement('span', { className: 'text-[13px] font-medium' }, label),
+      React.createElement('button', {
+        onClick: () => inputRef.current && inputRef.current.click(),
+        className: 'text-[11px] px-2.5 py-1 rounded',
+        style: { background:'var(--panel-2)', border:'1px solid var(--line)', color:'var(--text)' }
+      }, uploading === kind ? 'Uploading...' : 'Choose CSV')
+    ),
+    React.createElement('input', {
+      ref: inputRef, type: 'file', accept: '.csv', className: 'hidden',
+      onChange: e => e.target.files[0] && onUpload(kind, e.target.files[0])
+    }),
+    React.createElement(MappingReport, { report })
+  );
+}
+
+function UploadPanel({ uploadReports, uploading, onUpload, onUseDemoData, hasUploadedData }) {
+  return React.createElement('div', { className: 'p-4 rounded mb-4 fade-in', style:{background:'var(--panel-2)', border:'1px solid var(--line)'} },
+    React.createElement('p', { className: 'text-[12px] mb-3', style:{color:'var(--text-dim)'} },
+      'Upload your own account or ticket export as CSV. Column names, date formats, and status/priority wording don\u2019t need to match exactly - OpsPilot maps them automatically and shows you what it matched.'),
+    React.createElement(UploadRow, { label: 'Accounts export', kind: 'accounts', report: uploadReports.accounts, uploading, onUpload }),
+    React.createElement(UploadRow, { label: 'Tickets export', kind: 'tickets', report: uploadReports.tickets, uploading, onUpload }),
+    hasUploadedData && React.createElement('button', {
+      onClick: onUseDemoData,
+      className: 'text-[11px] mt-1', style:{color:'var(--text-faint)'}
+    }, '\u2190 switch back to demo data')
+  );
+}
+
+
+function App() {
+  const [apiKey, setApiKey] = useState(localStorage.getItem ? '' : '');
+  const [keyInput, setKeyInput] = useState('');
+  const [keySaved, setKeySaved] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [sentMessage, setSentMessage] = useState('');
+  const [steps, setSteps] = useState([]);
+  const [running, setRunning] = useState(false);
+  const [artifact, setArtifact] = useState(null);
+  const [datasetId, setDatasetId] = useState(null);
+  const [uploadReports, setUploadReports] = useState({ accounts: null, tickets: null });
+  const [uploading, setUploading] = useState(null); // 'accounts' | 'tickets' | null
+  const [showUpload, setShowUpload] = useState(false);
+  const traceEndRef = useRef(null);
+
+  useEffect(() => {
+    const ping = () => fetch('/api/heartbeat', { method: 'POST' }).catch(() => {});
+    ping();
+    const interval = setInterval(ping, 3000);
+    const onHide = () => navigator.sendBeacon('/api/shutdown', new Blob());
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pagehide', onHide);
+    };
+  }, []);
+
+  async function uploadFile(kind, file) {
+    setUploading(kind);
+    try {
+      const form = new FormData();
+      form.append('kind', kind);
+      if (datasetId) form.append('dataset_id', datasetId);
+      form.append('file', file);
+      const resp = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await resp.json();
+      if (data.error) {
+        setUploadReports(prev => ({ ...prev, [kind]: { error: data.error } }));
+      } else {
+        setDatasetId(data.dataset_id);
+        setUploadReports(prev => ({ ...prev, [kind]: data }));
+      }
+    } catch (err) {
+      setUploadReports(prev => ({ ...prev, [kind]: { error: 'Upload failed - is the server running?' } }));
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function useDemoData() {
+    setDatasetId(null);
+    setUploadReports({ accounts: null, tickets: null });
+  }
+
+  useEffect(() => {
+    if (traceEndRef.current) traceEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [steps]);
+
+  async function runAgent(text) {
+    if (!apiKey) { setKeySaved(false); return; }
+    setSentMessage(text);
+    setInputText('');
+    setSteps([]);
+    setArtifact(null);
+    setRunning(true);
+
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, api_key: apiKey, dataset_id: datasetId }),
+      });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split('\n\n');
+        buf = parts.pop();
+        for (const part of parts) {
+          const line = part.replace(/^data:\s*/, '');
+          if (line === '[DONE]') continue;
+          try {
+            const evt = JSON.parse(line);
+            setSteps(prev => [...prev, evt]);
+            if (evt.type === 'tool_result' && evt.name === 'draft_report') {
+              setArtifact(evt.result);
+            }
+          } catch (e) { /* ignore partial */ }
+        }
+      }
+    } catch (err) {
+      setSteps(prev => [...prev, { type: 'error', text: 'Could not reach the OpsPilot backend. Is the server running?' }]);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function saveKey() {
+    if (keyInput.trim()) {
+      setApiKey(keyInput.trim());
+      setKeySaved(true);
+    }
+  }
+
+  return React.createElement('div', { className: 'h-full flex flex-col' },
+    // Header
+    React.createElement('header', { className: 'flex items-center justify-between px-6 py-3 shrink-0', style:{borderBottom:'1px solid var(--line-soft)'} },
+      React.createElement('div', { className: 'flex items-center gap-2' },
+        React.createElement('span', { style:{color:'var(--amber)'} }, React.createElement(Icon.bolt)),
+        React.createElement('span', { className: 'font-semibold text-[15px]' }, 'OpsPilot'),
+        React.createElement('span', { className: 'mono text-[10px] px-1.5 py-0.5 rounded', style:{background:'var(--panel-2)', color: datasetId ? 'var(--green)' : 'var(--text-faint)'} },
+          datasetId ? 'your data' : 'demo / synthetic data'
+        ),
+        React.createElement('button', {
+          onClick: () => setShowUpload(!showUpload),
+          className: 'text-[11px] px-2 py-0.5 rounded',
+          style: { background:'var(--panel-2)', border:'1px solid var(--line)', color:'var(--text-dim)' }
+        }, showUpload ? 'Hide upload' : 'Upload your own data')
+      ),
+      React.createElement('div', { className: 'flex items-center gap-2' },
+        React.createElement('input', {
+          type: 'password',
+          placeholder: 'Anthropic API key',
+          value: keyInput,
+          onChange: e => setKeyInput(e.target.value),
+          className: 'mono text-[12px] px-2 py-1 rounded w-48',
+          style: { background:'var(--panel-2)', border:'1px solid var(--line)', color:'var(--text)' }
+        }),
+        React.createElement('button', {
+          onClick: saveKey,
+          className: 'text-[12px] px-3 py-1 rounded font-medium',
+          style: { background: keySaved ? 'var(--green)' : 'var(--amber)', color:'#111' }
+        }, keySaved ? 'Key set' : 'Set key')
+      )
+    ),
+
+    // Main
+    React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
+
+      // Left: chat + artifact
+      React.createElement('div', { className: 'w-[46%] flex flex-col p-6 overflow-y-auto', style:{borderRight:'1px solid var(--line-soft)'} },
+        showUpload && React.createElement(UploadPanel, {
+          uploadReports, uploading,
+          onUpload: uploadFile,
+          onUseDemoData: useDemoData,
+          hasUploadedData: !!datasetId,
+        }),
+        steps.length === 0 && !running && React.createElement('div', { className: 'flex-1 flex flex-col justify-center' },
+          React.createElement('p', { className: 'text-[13px] mb-3', style:{color:'var(--text-dim)'} }, 'Try asking:'),
+          EXAMPLE_PROMPTS.map((p, i) => React.createElement('button', {
+            key: i,
+            onClick: () => runAgent(p),
+            className: 'text-left text-[13px] p-3 rounded mb-2 fade-in',
+            style: { background:'var(--panel)', border:'1px solid var(--line)', color:'var(--text)' }
+          }, p))
+        ),
+
+        sentMessage && React.createElement('div', { className: 'mb-4' },
+          React.createElement('p', { className: 'text-[11px] mb-1', style:{color:'var(--text-faint)'} }, 'REQUEST'),
+          React.createElement('p', { className: 'text-[14px] p-3 rounded', style:{background:'var(--panel)', border:'1px solid var(--line)'} }, sentMessage)
+        ),
+
+        artifact && React.createElement('div', { className: 'mt-2' }, React.createElement(ArtifactCard, { artifact })),
+
+        React.createElement('div', { className: 'mt-auto pt-4' },
+          React.createElement('textarea', {
+            rows: 2,
+            placeholder: 'Ask OpsPilot to investigate accounts, tickets, or draft a report...',
+            value: inputText,
+            onChange: e => setInputText(e.target.value),
+            disabled: running,
+            className: 'w-full text-[13.5px] p-3 rounded resize-none',
+            style: { background:'var(--panel)', border:'1px solid var(--line)', color:'var(--text)' },
+            onKeyDown: e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (inputText.trim() && !running) runAgent(inputText.trim());
+              }
+            }
+          }),
+          React.createElement('div', { className: 'flex justify-between items-center mt-2' },
+            React.createElement('span', { className: 'text-[11px]', style:{color:'var(--text-faint)'} }, !apiKey ? 'Set an API key to run the agent' : 'Enter to send'),
+            React.createElement('button', {
+              onClick: () => inputText.trim() && !running && runAgent(inputText.trim()),
+              disabled: running || !inputText.trim(),
+              className: 'text-[12px] px-4 py-1.5 rounded font-medium',
+              style: { background: running ? 'var(--panel-2)' : 'var(--amber)', color: running ? 'var(--text-faint)' : '#111' }
+            }, running ? 'Running...' : 'Run')
+          )
+        )
+      ),
+
+      // Right: live trace panel
+      React.createElement('div', { className: 'flex-1 flex flex-col p-6 overflow-hidden' },
+        React.createElement('div', { className: 'flex items-center gap-2 mb-4 shrink-0' },
+          React.createElement('span', { className: 'text-[12px] font-medium uppercase tracking-wider', style:{color:'var(--text-dim)'} }, 'Agent trace'),
+          running && React.createElement('span', { className: 'w-1.5 h-1.5 rounded-full pulse-dot', style:{background:'var(--amber)'} })
+        ),
+        React.createElement('div', { className: 'flex-1 overflow-y-auto pr-2' },
+          steps.length === 0 && React.createElement('p', { className: 'text-[13px]', style:{color:'var(--text-faint)'} }, 'Plan, tool calls, and results will stream here as the agent works.'),
+          steps.map((s, i) => React.createElement(TraceStep, { key: i, step: s, isLast: i === steps.length - 1, isStreaming: running })),
+          React.createElement('div', { ref: traceEndRef })
+        )
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(React.createElement(App));
+</script>
+</body>
+</html>
