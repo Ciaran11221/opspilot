@@ -20,7 +20,9 @@ ENV/
 exe-dist/
 *.spec
 backend/build/
-
+build/
+exe-dist/
+*.spec
 # --- Environment / secrets ---
 .env
 .env.local
