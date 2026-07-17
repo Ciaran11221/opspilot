@@ -159,37 +159,48 @@ def _match_headers(
     normalized_headers = list(normalized_to_original.keys())
 
     mapping: dict[str, str] = {}
-    report: list[dict[str, str | None]] = []
+    confidence_by_field: dict[str, str] = {}
     used_headers: set[str] = set()
 
+    # Phase 1: exact matches for every field, as a complete pass over all
+    # fields before any fuzzy matching runs. Doing exact-then-fuzzy per
+    # field (in dict order) would let an earlier field's fuzzy fallback
+    # steal a header that a later field would have matched exactly - e.g.
+    # reporterEmail's "createdby" alias fuzzy-matches a "Created" column at
+    # high similarity; if that ran before the `created` field got its
+    # exact-match turn, `created` would end up unmapped even though
+    # "Created" was sitting right there as an exact alias for it.
     for field, alias_list in aliases.items():
-        matched_header: str | None = None
-        confidence: str | None = None
-
-        # 1. Exact match against any known alias.
         for alias in alias_list:
             if alias in normalized_headers and normalized_to_original[alias] not in used_headers:
                 matched_header = normalized_to_original[alias]
-                confidence = "exact"
+                mapping[field] = matched_header
+                confidence_by_field[field] = "exact"
+                used_headers.add(matched_header)
                 break
 
-        # 2. Fuzzy fallback - catches typos and unlisted synonyms.
-        if not matched_header:
-            candidates = [h for h in normalized_headers if normalized_to_original[h] not in used_headers]
-            close = difflib.get_close_matches(field.lower(), candidates, n=1, cutoff=0.72)
-            if not close:
-                for alias in alias_list:
-                    close = difflib.get_close_matches(alias, candidates, n=1, cutoff=0.8)
-                    if close:
-                        break
-            if close:
-                matched_header = normalized_to_original[close[0]]
-                confidence = "fuzzy"
-
-        if matched_header:
+    # Phase 2: fuzzy fallback, only for fields still unmatched, only against
+    # headers no exact match already claimed.
+    for field, alias_list in aliases.items():
+        if field in mapping:
+            continue
+        candidates = [h for h in normalized_headers if normalized_to_original[h] not in used_headers]
+        close = difflib.get_close_matches(field.lower(), candidates, n=1, cutoff=0.72)
+        if not close:
+            for alias in alias_list:
+                close = difflib.get_close_matches(alias, candidates, n=1, cutoff=0.8)
+                if close:
+                    break
+        if close:
+            matched_header = normalized_to_original[close[0]]
             mapping[field] = matched_header
+            confidence_by_field[field] = "fuzzy"
             used_headers.add(matched_header)
-        report.append({"field": field, "header": matched_header, "confidence": confidence})
+
+    report: list[dict[str, str | None]] = [
+        {"field": field, "header": mapping.get(field), "confidence": confidence_by_field.get(field)}
+        for field in aliases
+    ]
 
     return mapping, report
 

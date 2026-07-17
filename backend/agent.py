@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import anthropic
-
 import dataset_store
 from tools import DEMO_TOOL_IMPLEMENTATIONS, build_tool_implementations
 
@@ -206,12 +206,20 @@ async def run_agent(
 
             for block in response.content:
                 if block.type == "text" and block.text.strip():
-                    yield _event("plan", text=block.text.strip(), turn=turn)
+                    # Only surface text as a "plan" step when this turn goes on
+                    # to make more tool calls. When stop_reason isn't tool_use,
+                    # this text *is* the final answer and is emitted once,
+                    # below, as a "final" event - emitting it here too would
+                    # show the same text twice in the trace panel.
+                    if response.stop_reason == "tool_use":
+                        yield _event("plan", text=block.text.strip(), turn=turn)
                     assistant_content.append({"type": "text", "text": block.text})
                 elif block.type == "tool_use":
                     yield _event("tool_call", name=block.name, input=block.input, turn=turn, tool_use_id=block.id)
                     tool_calls.append(block)
-                    assistant_content.append({"type": "tool_use", "id": block.id, "name": block.name, "input": block.input})
+                    assistant_content.append(
+                        {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
+                    )
 
             messages.append({"role": "assistant", "content": assistant_content})
 

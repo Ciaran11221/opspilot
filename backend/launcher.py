@@ -13,7 +13,6 @@ import time
 import webbrowser
 
 import uvicorn
-
 from main import app
 
 HOST = "127.0.0.1"

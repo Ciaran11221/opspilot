@@ -1,0 +1,12 @@
+line-length = 120
+target-version = "py310"
+
+extend-exclude = ["exe-dist", "frontend/dist", "build", "dist"]
+
+[lint]
+# Default (E, F) plus import-sorting and a few common footguns - kept small
+# and low-noise rather than turning on everything ruff offers.
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "B008",  # FastAPI's File(...)/Form(...)/Depends(...) as defaults is the idiomatic pattern, not a bug
+]

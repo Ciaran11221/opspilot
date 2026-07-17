@@ -22,17 +22,17 @@ import json
 import os
 import threading
 import time
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Any, AsyncGenerator
-
-from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from typing import Any
 
 import csv_ingest
 import dataset_store
 from agent import run_agent
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 app = FastAPI(title="OpsPilot")
 
