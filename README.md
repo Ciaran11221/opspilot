@@ -7,7 +7,7 @@ problem in real time — plan, tool call, result, next step — instead of a
 spinner. Runs against a bundled synthetic dataset out of the box, or your
 own uploaded CSV.
 
-A standalone portfolio demo, not a production deployment — see
+A standalone interview/portfolio demo, not a production deployment — see
 [Honesty notes](#honesty-notes).
 
 ## What it does

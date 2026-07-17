@@ -1,0 +1,81 @@
+# Design notes
+
+Deeper detail on OpsPilot for anyone who wants it — architecture, the
+reasoning behind specific choices, and known limitations. The main
+[README](../README.md) covers what you need to run it; this is the rest.
+
+## Architecture
+
+**Request flow, end to end:**
+
+1. Browser sends a chat message (+ API key, + optional `dataset_id`) to `POST /api/chat`.
+2. `main.py` opens an SSE stream and hands off to `agent.run_agent()`.
+3. `agent.py` runs Claude's tool-use loop: each turn, the model either calls
+   a tool or gives a final answer.
+4. Tool calls are executed by `tools.py` against whichever dataset is active
+   (bundled demo data, or an uploaded dataset via `dataset_store.py`).
+5. Every step (plan / tool_call / tool_result / final) is yielded as a
+   structured event and streamed to the browser immediately.
+6. The frontend renders each event into the live trace panel as it arrives.
+
+## Design decisions
+
+A few choices worth explaining, since they weren't the "obvious" option:
+
+- **No Node.js/build step for the frontend.** The UI is plain HTML with
+  React and Tailwind loaded from CDN, using `React.createElement` calls
+  instead of JSX. This keeps the eventual PyInstaller packaging simple —
+  there's nothing to compile, `frontend/dist/` just needs to exist on disk.
+- **Keyword-based "elevated account" detection, not an exact group-name
+  list.** Early on this matched a fixed list of the demo dataset's own group
+  names (`Domain-Admins`, `Billing-Admins`, etc.), which would have silently
+  failed to generalize to a real organization's own naming conventions.
+  It's now keyword-based (`admin`, `root`, `super`, `owner`, `billing`,
+  etc.) matched against both title and group membership, so it works on
+  real exports with unfamiliar naming.
+- **Ingestion fails loud, never silent.** Anywhere the CSV ingestion can't
+  confidently identify a column or parse a value, it surfaces that as an
+  explicit warning rather than making a best guess that could silently
+  corrupt a filter result later (e.g. an account wrongly excluded from
+  "elevated" because a `groups` column was mis-mapped).
+- **In-memory dataset storage, no database.** This is a local, single-user
+  demo tool, not a multi-tenant service — a process-local dict is the right
+  amount of engineering for that scope, not an under-engineered shortcut.
+- **Cheapest model by default.** Defaults to Claude Haiku rather than a
+  larger model, since the task (structured tool calls against small JSON
+  datasets) doesn't need frontier reasoning. `OPSPILOT_MODEL` makes swapping
+  to a stronger model for a live demo a one-line change.
+
+## Known limitations
+
+- Date parsing assumes US-style `mm/dd/yyyy` before falling back to
+  `dd/mm/yyyy` for ambiguous numeric dates (e.g. `03/04/2026`) — correct for
+  most US-originated exports, but worth knowing if testing with UK/EU-style
+  files where day comes first.
+- Uploaded datasets live in server memory only — restarting the server
+  clears them. There's no persistence layer, by design (see Design
+  decisions above).
+- The agent loop is capped at 6 tool-use turns (`MAX_TURNS` in `agent.py`)
+  to prevent a runaway loop during a live demo; a genuinely complex request
+  could in theory need more steps than that.
+- No automated test suite yet — validation so far has been manual/scripted
+  smoke testing against both the bundled dataset and the sample messy CSVs.
+
+## Testing / validation
+
+There's no CI or automated test suite yet, but the following has been
+manually verified end-to-end:
+
+- The bundled demo dataset consistently returns its seeded ground-truth
+  counts (12 inactive+elevated accounts, tickets at various SLA-risk
+  thresholds) through the actual HTTP API, not just at the function level.
+- CSV ingestion tested against two deliberately messy sample files
+  (different headers, mixed date formats, an unrecognized priority value)
+  with correct column mapping, correct fallback behavior, and correct
+  warning generation.
+- Full upload → dataset summary → chat request pipeline tested against a
+  running server, confirming an uploaded dataset is actually used by the
+  agent loop instead of the bundled demo data.
+- Heartbeat/shutdown endpoints tested directly: health check, heartbeat
+  acknowledgment, and explicit shutdown all confirmed working, including
+  the server actually terminating on request.
