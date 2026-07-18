@@ -38,6 +38,10 @@ account names, ticket keys, or numbers.
 - When asked to find a set of accounts or tickets meeting some criteria, call query_accounts or \
 query_tickets with the narrowest filters that match the request, rather than pulling everything \
 and filtering yourself in prose.
+- Query results show at most 10 records in detail even when more match - the `count` field always \
+reflects the true total, and a `note` will say so when the list was capped. Only draft artifacts \
+for the records actually shown to you, never for records you haven't seen. If a query is capped and \
+the user needs the rest, say so and suggest narrowing the filter rather than guessing at unseen data.
 - When the user asks for a report, offboarding ticket, or similar artifact, gather the relevant \
 data first, then call draft_report once per artifact needed - once for a single report, or once \
 per item when asked to draft something "for each" account/ticket in a set.

@@ -42,6 +42,18 @@ ELEVATED_KEYWORDS: list[str] = [
     "admin", "root", "super", "owner", "global admin", "domain admin", "billing",
 ]
 
+# Caps how many records a query_* tool returns in detail. This exists
+# specifically to prevent the scenario where a broad match (e.g. "12 inactive
+# elevated accounts") leads the model to attempt drafting one artifact per
+# record in a single response, exceeding the API's max_tokens mid-generation
+# and silently truncating (see agent.py's max_tokens handling, and the
+# regression test for the bug that caused). Capping here is more robust than
+# relying on the model to self-limit: it's enforced regardless of prompt
+# wording, and `count` always reflects the TRUE total match count even when
+# the detail list is truncated, so answers like "how many accounts are
+# suspended" stay accurate.
+MAX_RESULTS_SHOWN = 10
+
 
 def _strip_ground_truth(record: dict[str, Any]) -> dict[str, Any]:
     """Remove internal bookkeeping fields before handing a record to the model.
@@ -59,6 +71,27 @@ def _strip_ground_truth(record: dict[str, Any]) -> dict[str, Any]:
         A copy of ``record`` with any key starting with ``_`` removed.
     """
     return {k: v for k, v in record.items() if not k.startswith("_")}
+
+
+def _cap_results(matched: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], str | None]:
+    """Cap a matched-records list to MAX_RESULTS_SHOWN, with an explanatory note if truncated.
+
+    Args:
+        matched: The full list of records that passed a query's filters.
+
+    Returns:
+        A tuple of (records to actually return, note or None). The note is
+        only present when truncation happened, and always states the true
+        total match count so the caller's ``count`` field stays accurate
+        even though the detail list itself is shorter.
+    """
+    if len(matched) <= MAX_RESULTS_SHOWN:
+        return matched, None
+    note = (
+        f"Matched {len(matched)} records - showing the first {MAX_RESULTS_SHOWN}. "
+        "Refine your filter (e.g. a narrower status, department, or date range) to see the rest."
+    )
+    return matched[:MAX_RESULTS_SHOWN], note
 
 
 def _is_elevated(account: dict[str, Any]) -> bool:
@@ -103,10 +136,12 @@ def query_accounts(
 
     Returns:
         A dict with:
-            - ``count``: number of matching accounts.
-            - ``accounts``: the matching records (ground-truth fields stripped).
+            - ``count``: true total number of matching accounts (not capped).
+            - ``accounts``: the matching records (ground-truth fields
+              stripped), capped at ``MAX_RESULTS_SHOWN``.
             - ``note`` (optional): present if any records were skipped
-              because their ``lastLogin`` couldn't be parsed as a date.
+              because their ``lastLogin`` couldn't be parsed as a date,
+              and/or if the detail list was capped.
     """
     results: list[dict[str, Any]] = []
     skipped_unparseable = 0
@@ -135,12 +170,20 @@ def query_accounts(
 
         results.append(_strip_ground_truth(account))
 
-    result: dict[str, Any] = {"count": len(results), "accounts": results}
+    total_matched = len(results)
+    shown, cap_note = _cap_results(results)
+
+    result: dict[str, Any] = {"count": total_matched, "accounts": shown}
+    notes = []
     if skipped_unparseable:
-        result["note"] = (
+        notes.append(
             f"{skipped_unparseable} account(s) had no usable lastLogin date and were "
             "skipped for the inactivity filter."
         )
+    if cap_note:
+        notes.append(cap_note)
+    if notes:
+        result["note"] = " ".join(notes)
     return result
 
 
@@ -168,11 +211,13 @@ def query_tickets(
 
     Returns:
         A dict with:
-            - ``count``: number of matching tickets.
+            - ``count``: true total number of matching tickets (not capped).
             - ``tickets``: the matching records, each with an added
-              ``slaRatio`` (elapsed / SLA window) where derivable.
+              ``slaRatio`` (elapsed / SLA window) where derivable, capped at
+              ``MAX_RESULTS_SHOWN``.
             - ``note`` (optional): present if any records were skipped
-              because no SLA window could be derived for them.
+              because no SLA window could be derived for them, and/or if the
+              detail list was capped.
     """
     results: list[dict[str, Any]] = []
     skipped_no_sla = 0
@@ -200,12 +245,20 @@ def query_tickets(
             record["slaRatio"] = round(elapsed_hours / sla_hours, 2)
         results.append(record)
 
-    result: dict[str, Any] = {"count": len(results), "tickets": results}
+    total_matched = len(results)
+    shown, cap_note = _cap_results(results)
+
+    result: dict[str, Any] = {"count": total_matched, "tickets": shown}
+    notes = []
     if skipped_no_sla:
-        result["note"] = (
+        notes.append(
             f"{skipped_no_sla} ticket(s) had no derivable SLA window and were skipped "
             "for the risk filter."
         )
+    if cap_note:
+        notes.append(cap_note)
+    if notes:
+        result["note"] = " ".join(notes)
     return result
 
 

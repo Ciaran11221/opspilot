@@ -96,6 +96,28 @@ class TestQueryAccounts:
         assert result["count"] == 2
         assert "note" not in result
 
+    def test_results_capped_at_ten_but_count_reflects_true_total(self):
+        accounts = [make_account(id=f"user-{i}") for i in range(14)]
+        result = query_accounts(accounts, NOW)
+        assert result["count"] == 14  # true total, not capped
+        assert len(result["accounts"]) == 10  # detail list IS capped
+        assert "14 records" in result["note"]
+        assert "first 10" in result["note"]
+
+    def test_exactly_ten_matches_is_not_treated_as_capped(self):
+        accounts = [make_account(id=f"user-{i}") for i in range(10)]
+        result = query_accounts(accounts, NOW)
+        assert result["count"] == 10
+        assert len(result["accounts"]) == 10
+        assert "note" not in result
+
+    def test_cap_note_combines_with_unparseable_note_when_both_apply(self):
+        accounts = [make_account(id=f"user-{i}", lastLogin="2026-01-01T00:00:00Z") for i in range(14)]
+        accounts.append(make_account(id="bad-date", lastLogin="not-a-date"))
+        result = query_accounts(accounts, NOW, min_inactive_days=90)
+        assert "1 account(s)" in result["note"]
+        assert "first 10" in result["note"]
+
 
 class TestQueryTickets:
     def test_status_and_priority_filters_combine(self):
@@ -137,6 +159,13 @@ class TestQueryTickets:
         tickets = [make_ticket(key="no_sla_data", slaHours=None, elapsedHours=None)]
         result = query_tickets(tickets)
         assert "slaRatio" not in result["tickets"][0]
+
+    def test_results_capped_at_ten_but_count_reflects_true_total(self):
+        tickets = [make_ticket(key=f"OPS-{i}") for i in range(14)]
+        result = query_tickets(tickets)
+        assert result["count"] == 14
+        assert len(result["tickets"]) == 10
+        assert "14 records" in result["note"]
 
 
 class TestDraftReport:
