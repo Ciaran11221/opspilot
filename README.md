@@ -23,6 +23,10 @@ It queries an account directory and a ticket queue, reasons about what it
 finds, and can draft a report or offboarding-ticket artifact as a final
 output.
 
+![OpsPilot demo - agent finding accounts and drafting offboarding tickets](docs/media/demo_main.gif)
+
+![OpsPilot demo - CSV upload with automatic column mapping](docs/media/demo_csv_upload.gif)
+
 ## Features
 
 - Real tool use — the model picks from three tools (`query_accounts`,
