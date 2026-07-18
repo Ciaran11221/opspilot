@@ -10,6 +10,7 @@ eval harness (backend/evals/), not here.
 from __future__ import annotations
 
 import types
+from typing import Any, cast
 from unittest.mock import AsyncMock, patch
 
 import agent
@@ -180,7 +181,7 @@ class TestRunAgentLoop:
         mock_request = types.SimpleNamespace(method="POST", url="https://api.anthropic.com/v1/messages")
         auth_error = anthropic.AuthenticationError(
             message="invalid x-api-key",
-            response=types.SimpleNamespace(request=mock_request, status_code=401, headers={}),
+            response=cast(Any, types.SimpleNamespace(request=mock_request, status_code=401, headers={})),
             body=None,
         )
         mock_client = types.SimpleNamespace(

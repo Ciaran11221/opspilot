@@ -18,10 +18,11 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, cast
 
 import anthropic
 import dataset_store
+from anthropic import types as anthropic_types
 from tools import DEMO_TOOL_IMPLEMENTATIONS, build_tool_implementations
 
 MODEL = os.environ.get("OPSPILOT_MODEL", "claude-haiku-4-5-20251001")
@@ -147,6 +148,10 @@ def _event(event_type: str, **data: Any) -> dict[str, Any]:
     return {"type": event_type, **data}
 
 
+def _message(role: str, content: Any) -> anthropic_types.MessageParam:
+    return cast(anthropic_types.MessageParam, {"role": role, "content": content})
+
+
 async def run_agent(
     user_message: str, api_key: str, dataset_id: str | None = None
 ) -> AsyncGenerator[dict[str, Any], None]:
@@ -173,7 +178,7 @@ async def run_agent(
         Trace event dicts, in order, as described above.
     """
     client = anthropic.AsyncAnthropic(api_key=api_key)
-    messages = [{"role": "user", "content": user_message}]
+    messages: list[anthropic_types.MessageParam] = [_message("user", user_message)]
 
     system_prompt = SYSTEM_PROMPT
     if dataset_id:
@@ -198,7 +203,7 @@ async def run_agent(
                 model=MODEL,
                 max_tokens=4096,
                 system=system_prompt,
-                tools=TOOLS,
+                tools=cast(list[anthropic_types.ToolUnionParam], TOOLS),
                 messages=messages,
             )
 
@@ -222,7 +227,7 @@ async def run_agent(
                         {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
                     )
 
-            messages.append({"role": "assistant", "content": assistant_content})
+            messages.append(_message("assistant", assistant_content))
 
             if response.stop_reason == "max_tokens":
                 # The response was cut off mid-generation, not a genuine "I'm
@@ -278,7 +283,7 @@ async def run_agent(
                     "content": json.dumps(result),
                 })
 
-            messages.append({"role": "user", "content": tool_result_content})
+            messages.append(_message("user", tool_result_content))
 
         yield _event("error", text=f"Stopped after {MAX_TURNS} turns without a final answer.")
 
