@@ -105,7 +105,52 @@ class TestRunAgentLoop:
         tool_result = next(e for e in events if e["type"] == "tool_result")
         assert "error" in tool_result["result"]
 
-    async def test_max_turns_cutoff_emits_error_instead_of_hanging(self):
+    async def test_max_tokens_truncation_executes_completed_calls_and_reports_honestly(self):
+        # Regression test: a response cut off by the output-length limit
+        # (not a genuine "I'm done") used to be treated as a successful
+        # final answer, silently discarding any tool calls in that same
+        # response without ever executing them. This reproduces that shape:
+        # a leading text block (stale "I'll do X" planning text) plus two
+        # tool_use blocks, cut off before the model could finish - one call
+        # fully parsed, the other is missing a required field because
+        # generation stopped mid-object.
+        responses = [
+            fake_response(
+                [
+                    text_block("Found 2 accounts. I'll draft a ticket for each."),
+                    tool_use_block(
+                        "draft_report",
+                        {"title": "Offboarding: A", "report_type": "offboarding_ticket", "body_markdown": "..."},
+                        id="t1",
+                    ),
+                    tool_use_block(
+                        "draft_report", {"title": "Offboarding: B", "report_type": "offboarding_ticket"}, id="t2"
+                    ),
+                ],
+                stop_reason="max_tokens",
+            ),
+        ]
+        mock_client = types.SimpleNamespace(messages=types.SimpleNamespace(create=AsyncMock(side_effect=responses)))
+
+        with patch("agent.anthropic.AsyncAnthropic", return_value=mock_client):
+            events = await collect_events("draft tickets for 2 accounts")
+
+        event_types = [e["type"] for e in events]
+        # Both tool calls must actually get executed (not silently dropped),
+        # and the run must end in an honest error, never a "final" claiming
+        # success on an incomplete/truncated response.
+        assert event_types.count("tool_call") == 2
+        assert event_types.count("tool_result") == 2
+        assert "final" not in event_types
+        assert events[-1]["type"] == "error"
+        assert "cut off" in events[-1]["text"]
+
+        # The call missing "body_markdown" (truncated mid-object) must
+        # surface as an error result, not crash the whole run.
+        tool_results = [e for e in events if e["type"] == "tool_result"]
+        assert any("error" in r["result"] for r in tool_results)
+
+
         # Always responds with another tool call, never a final answer -
         # the loop must give up after MAX_TURNS rather than looping forever.
         always_tool_use = fake_response(

@@ -38,7 +38,8 @@ account names, ticket keys, or numbers.
 query_tickets with the narrowest filters that match the request, rather than pulling everything \
 and filtering yourself in prose.
 - When the user asks for a report, offboarding ticket, or similar artifact, gather the relevant \
-data first, then call draft_report exactly once with the finished artifact.
+data first, then call draft_report once per artifact needed - once for a single report, or once \
+per item when asked to draft something "for each" account/ticket in a set.
 - All data is synthetic and clearly labeled as such. Do not claim these are real user accounts or \
 real support tickets, and do not claim any action here has been submitted to a real system - \
 draft_report only produces a draft artifact for the demo.
@@ -195,7 +196,7 @@ async def run_agent(
         for turn in range(MAX_TURNS):
             response = await client.messages.create(
                 model=MODEL,
-                max_tokens=2000,
+                max_tokens=4096,
                 system=system_prompt,
                 tools=TOOLS,
                 messages=messages,
@@ -222,6 +223,37 @@ async def run_agent(
                     )
 
             messages.append({"role": "assistant", "content": assistant_content})
+
+            if response.stop_reason == "max_tokens":
+                # The response was cut off mid-generation, not a genuine "I'm
+                # done" signal - stop_reason == "tool_use" and stop_reason ==
+                # "end_turn" are both real completion states, but max_tokens
+                # means Claude ran out of room, possibly mid-tool-call. Any
+                # tool_use blocks above that DID fully parse (e.g. the first
+                # 5 of 6 draft_report calls) still represent real, useful
+                # work - execute those rather than silently discarding them -
+                # but this must NOT be reported as a successful final answer,
+                # since work may be incomplete (e.g. only 5 of 12 requested
+                # tickets got drafted).
+                for call in tool_calls:
+                    impl = tool_implementations.get(call.name)
+                    if impl is None:
+                        result = {"error": f"unknown tool {call.name}"}
+                    else:
+                        try:
+                            result = impl(**call.input)
+                        except Exception as exc:  # e.g. a truncated call missing a required field
+                            result = {"error": str(exc)}
+                    yield _event("tool_result", name=call.name, result=result, turn=turn, tool_use_id=call.id)
+                yield _event(
+                    "error",
+                    text=(
+                        "Response was cut off before finishing (hit the model's output limit). "
+                        f"{len(tool_calls)} tool call(s) above completed, but the task may be "
+                        "incomplete - try asking for a smaller batch at once."
+                    ),
+                )
+                return
 
             if response.stop_reason != "tool_use":
                 final_text = "".join(b.text for b in response.content if b.type == "text")
