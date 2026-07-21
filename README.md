@@ -41,7 +41,7 @@ output.
 - Closes itself down cleanly when the demo browser tab closes.
 - Packaged as a standalone Windows `.exe` — double-click, no Python install
   needed on the demo machine.
-- 60+ automated tests and a CI pipeline (below) — this isn't just demo-day
+- 67 automated tests and a CI pipeline (below) — this isn't just demo-day
   code, it's held to the same bar as anything shipped for real.
 
 ## Getting started
@@ -85,7 +85,7 @@ flagged, not guessed. Try it with the sample files in
 ```bash
 cd opspilot
 pip install -r backend/requirements-dev.txt
-pytest              # 60+ tests, mocked API calls, runs in under 2 seconds
+pytest              # 67 tests, mocked API calls, runs in under 2 seconds
 ruff check backend/  # lint
 ```
 
@@ -177,12 +177,34 @@ Run it from the repo root (paths above are relative to it). Output lands in
 `exe-dist/launcher.exe` — `--distpath exe-dist` keeps PyInstaller's build
 output separate from `frontend/dist`, which is a different folder entirely.
 
+## Known limitations
+
+Things this project deliberately doesn't solve, since they're outside its
+scope as a portfolio/interview demo rather than oversights:
+
+- **No persistence across server restarts** — uploaded datasets live in
+  memory only (`dataset_store.py`). Restarting the server loses them. A real
+  deployment would need a database, not an in-memory dict.
+- **Single-process, not built for concurrent users** — fine for a one-person
+  demo; would need per-session isolation and a real datastore to support
+  multiple people using it at once.
+- **Query results cap at 10 records in detail** (`tools.py`) to avoid the
+  model exceeding its output budget mid-response when a lot of records
+  match. This is a deliberate tradeoff, not a bug - see the note in `tools.py`
+  for why, and the regression test in `test_agent.py` for what happens
+  without it.
+- **No retry/backoff on Anthropic API errors** — a transient API failure
+  surfaces as an error in the trace panel rather than automatically retrying.
+- **The eval harness is 6 hand-picked scenarios**, not a large or randomized
+  benchmark — enough to catch a regression in obvious tool-selection
+  behavior, not a claim of statistical coverage.
+
 ## Roadmap
 
 - [x] Automated test suite (pytest, mocked API, CI on every push)
 - [x] Eval harness for actual model tool-selection behavior
 - [x] PyInstaller build + smoke test on Windows
-- [ ] Short demo recording for this README
+- [x] Demo GIFs in this README
 
 ## License
 
