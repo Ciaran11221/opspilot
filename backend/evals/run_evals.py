@@ -44,6 +44,7 @@ class EvalResult:
     had_error: bool
     error_text: str | None
     final_text: str | None
+    turns_used: int = 0  # highest turn index seen + 1, i.e. how many turns this scenario actually took
 
     @property
     def passed(self) -> bool:
@@ -75,8 +76,11 @@ async def run_scenario(scenario: EvalScenario, api_key: str) -> EvalResult:
     had_error = False
     error_text: str | None = None
     final_text: str | None = None
+    max_turn_seen = -1
 
     async for event in agent.run_agent(scenario.prompt, api_key, dataset_id=None):
+        if "turn" in event:
+            max_turn_seen = max(max_turn_seen, event["turn"])
         if event["type"] == "tool_call":
             called_tools.add(event["name"])
         elif event["type"] == "error":
@@ -91,6 +95,7 @@ async def run_scenario(scenario: EvalScenario, api_key: str) -> EvalResult:
         had_error=had_error,
         error_text=error_text,
         final_text=final_text,
+        turns_used=max_turn_seen + 1,
     )
 
 
@@ -99,7 +104,7 @@ async def run_all(scenarios: list[EvalScenario], api_key: str, verbose: bool) ->
     for scenario in scenarios:
         print(f"  running: {scenario.id} ...", end=" ", flush=True)
         result = await run_scenario(scenario, api_key)
-        print("PASS" if result.passed else "FAIL")
+        print(f"PASS ({result.turns_used} turn(s))" if result.passed else f"FAIL ({result.turns_used} turn(s))")
         if verbose or not result.passed:
             print(f"    prompt:   {scenario.prompt}")
             print(f"    required: {sorted(scenario.required_tools) or '(none)'}")
@@ -145,6 +150,12 @@ def main() -> int:
     passed = sum(r.passed for r in results)
     total = len(results)
     print(f"\n{passed}/{total} scenarios passed ({100 * passed / total:.0f}%)")
+
+    max_turns_used = max((r.turns_used for r in results), default=0)
+    print(
+        f"Turns used: max {max_turns_used} of MAX_TURNS={agent.MAX_TURNS} "
+        f"(per-scenario: {[r.turns_used for r in results]})"
+    )
 
     return 0 if passed == total else 1
 

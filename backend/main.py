@@ -28,11 +28,12 @@ from typing import Any
 
 import csv_ingest
 import dataset_store
-from agent import run_agent
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+from agent import run_agent, run_agent_sync
 
 app = FastAPI(title="OpsPilot")
 
@@ -204,6 +205,30 @@ async def chat(req: ChatRequest, request: Request) -> StreamingResponse:
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/api/chat-sync")
+async def chat_sync(req: ChatRequest) -> dict[str, Any]:
+    """Run the agent loop for one message and return a single JSON result.
+
+    This is the endpoint a Power Platform custom connector (or any other
+    request/response-only caller - not everything speaks SSE) should call,
+    rather than ``/api/chat``. It runs the exact same agent loop and
+    redaction layer as the streaming endpoint, just without the live trace
+    events - the request blocks until the agent finishes (typically a few
+    seconds to under a minute, depending on how many tool-use turns the
+    request needs) and returns one aggregated result.
+
+    Args:
+        req: The chat request body (message, API key, optional dataset id) -
+            same shape as ``/api/chat``.
+
+    Returns:
+        The dict described in ``agent.run_agent_sync``'s docstring:
+        ``status``, ``answer``, ``tool_calls``, ``draft_reports``, and
+        ``error`` (only present when ``status`` is ``"error"``).
+    """
+    return await run_agent_sync(req.message, req.api_key, req.dataset_id)
 
 
 # Serve the built frontend (static files) if present. During backend-only

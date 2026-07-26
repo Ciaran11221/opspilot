@@ -103,3 +103,31 @@ def test_chat_wraps_unexpected_exceptions_as_an_error_event():
 
     assert "boom" in response.text
     assert response.text.strip().endswith("data: [DONE]")
+
+
+def test_chat_sync_returns_the_aggregated_result_as_plain_json():
+    async def fake_run_agent_sync(message, api_key, dataset_id):
+        return {"status": "ok", "answer": "done", "tool_calls": [], "draft_reports": []}
+
+    with patch("main.run_agent_sync", fake_run_agent_sync):
+        response = client.post("/api/chat-sync", json={"message": "hi", "api_key": "test-key"})
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "answer": "done", "tool_calls": [], "draft_reports": []}
+
+
+def test_chat_sync_passes_through_an_error_result_with_200_status():
+    # A run that ends in an agent-level error (bad key, MAX_TURNS, etc.) is
+    # still a successful HTTP call - the error is data in the body
+    # (status: "error"), not an HTTP-level failure. This matters for a
+    # Power Automate flow calling this endpoint: it should branch on the
+    # "status" field in the response, not on the HTTP status code.
+    async def fake_run_agent_sync(message, api_key, dataset_id):
+        return {"status": "error", "answer": None, "tool_calls": [], "draft_reports": [], "error": "boom"}
+
+    with patch("main.run_agent_sync", fake_run_agent_sync):
+        response = client.post("/api/chat-sync", json={"message": "hi", "api_key": "test-key"})
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "error"
+    assert response.json()["error"] == "boom"

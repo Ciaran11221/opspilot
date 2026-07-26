@@ -200,13 +200,34 @@ async def run_agent(
     rmap = RedactionMap()
 
     # System prompt as a list of cacheable content blocks rather than one
-    # string. SYSTEM_PROMPT alone is byte-identical across every request
-    # (demo or uploaded), so it gets its own cache breakpoint - a cache hit
-    # regardless of dataset. The optional addendum below is identical across
-    # every turn *within* one request, so turns 2+ of that request hit cache
-    # too, even though it differs between demo and uploaded-dataset requests.
+    # string. SYSTEM_PROMPT is byte-identical across every request (demo or
+    # uploaded) - own cache breakpoint, hit regardless of dataset. The
+    # redaction-token note is ALSO always present, in both branches below:
+    # both the demo dataset and any uploaded dataset get redacted (see
+    # redact_accounts/redact_tickets calls below), so Claude always needs to
+    # know what [PERSON_1]-style tokens mean, not just on the upload path.
+    # (Regression note: an earlier version only added this note for uploaded
+    # datasets, even though demo-dataset queries were also redacted - Claude
+    # would then see undefined tokens and describe them, confusingly, as
+    # "anonymized" in its own final answer, which then got rehydrated back to
+    # the real value - producing a self-contradictory sentence. Caught via
+    # the eval harness's nonexistent_account_not_fabricated scenario.)
+    redaction_note = {
+        "type": "text",
+        "text": (
+            "Names, emails, and usernames in the data you can query have been replaced with tokens like "
+            "[PERSON_1] and [EMAIL_2] before reaching you - this is a privacy layer, not missing or malformed "
+            "data, and it applies to both the bundled demo dataset and any uploaded dataset. Always use these "
+            "tokens exactly as given (in filters, in drafted reports, in your own answers) rather than "
+            "inventing or guessing a real name or address, and don't describe them to the user as anonymized, "
+            "redacted, or unusual - they are rehydrated back to real values for the human user automatically "
+            "after you respond, so from the user's point of view nothing looks anonymized at all."
+        ),
+        "cache_control": {"type": "ephemeral"},
+    }
     system_blocks: list[dict[str, Any]] = [
-        {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}
+        {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},
+        redaction_note,
     ]
     if dataset_id:
         dataset = dataset_store.get_dataset(dataset_id)
@@ -223,12 +244,7 @@ async def run_agent(
                 "dataset). It has been normalized from their CSV but may have gaps - some records may be "
                 "missing fields the export didn't include. Tool results may include a 'note' field flagging "
                 "rows that were skipped for a given filter; mention this to the user if it's relevant to "
-                "their question rather than silently ignoring it.\n\n"
-                "Names, emails, and usernames have been replaced with tokens like [PERSON_1] and [EMAIL_2] "
-                "before reaching you - this is a privacy layer, not missing data. Always use these tokens "
-                "exactly as given (in filters, in drafted reports, everywhere) rather than inventing or "
-                "guessing a real name or address; they are rehydrated back to real values for the human "
-                "user automatically after you respond."
+                "their question rather than silently ignoring it."
             ),
             "cache_control": {"type": "ephemeral"},
         })
@@ -236,6 +252,7 @@ async def run_agent(
         redacted_accounts = redact_accounts(DEMO_ACCOUNTS, rmap)
         redacted_tickets = redact_tickets(DEMO_TICKETS, rmap)
         tool_implementations = build_tool_implementations(redacted_accounts, redacted_tickets, NOW_DEMO)
+
 
 
     try:
@@ -338,3 +355,68 @@ async def run_agent(
         yield _event("error", text="Invalid or missing API key. Enter a valid Anthropic API key to run the agent.")
     except Exception as exc:
         yield _event("error", text=f"Agent error: {exc}")
+
+
+async def run_agent_sync(user_message: str, api_key: str, dataset_id: str | None = None) -> dict[str, Any]:
+    """Run the agent loop to completion and return one aggregated JSON result.
+
+    ``run_agent`` streams trace events for the browser's live trace panel -
+    the right shape for a human watching a demo, but not what a Power
+    Automate flow or Copilot Studio topic action can consume: those callers
+    make one HTTP request and expect one JSON response back, not an SSE
+    stream. This wraps the same underlying loop and collects every event
+    into a single summary, so it's the entry point a Power Platform custom
+    connector should call rather than ``run_agent`` directly.
+
+    Args:
+        user_message: The user's chat input.
+        api_key: An Anthropic API key, used to construct a per-request client.
+        dataset_id: If provided, runs against that uploaded dataset instead
+            of the bundled demo data (see ``run_agent``).
+
+    Returns:
+        A dict with:
+            - ``status``: ``"ok"`` or ``"error"``.
+            - ``answer``: the final answer text, or ``None`` if the run
+              ended in an error before producing one.
+            - ``tool_calls``: list of ``{"name": ..., "input": ...}`` for
+              every tool call made, in order - useful for a flow that wants
+              to log or branch on what the agent actually did.
+            - ``draft_reports``: list of every ``draft_report`` tool's
+              result dict (title, reportType, body, relatedIds, draftedAt,
+              status) - the artifacts a Power Automate flow would actually
+              post into a ticketing system or Teams channel.
+            - ``error``: the error text if ``status`` is ``"error"``,
+              otherwise omitted.
+    """
+    tool_calls: list[dict[str, Any]] = []
+    draft_reports: list[dict[str, Any]] = []
+    answer: str | None = None
+    error_text: str | None = None
+
+    async for event in run_agent(user_message, api_key, dataset_id):
+        if event["type"] == "tool_call":
+            tool_calls.append({"name": event["name"], "input": event["input"]})
+        elif event["type"] == "tool_result" and event["name"] == "draft_report":
+            result = event["result"]
+            if "error" not in result:
+                draft_reports.append(result)
+        elif event["type"] == "final":
+            answer = event["text"]
+        elif event["type"] == "error":
+            error_text = event["text"]
+
+    if error_text is not None:
+        return {
+            "status": "error",
+            "answer": None,
+            "tool_calls": tool_calls,
+            "draft_reports": draft_reports,
+            "error": error_text,
+        }
+    return {
+        "status": "ok",
+        "answer": answer,
+        "tool_calls": tool_calls,
+        "draft_reports": draft_reports,
+    }

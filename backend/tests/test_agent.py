@@ -212,3 +212,88 @@ class TestRunAgentLoop:
 
         plan_events = [e for e in events if e["type"] == "plan"]
         assert len(plan_events) == 0
+
+
+class TestRunAgentSync:
+    async def test_aggregates_a_successful_run_into_one_result(self):
+        responses = [
+            fake_response(
+                [
+                    text_block("Let me check accounts."),
+                    tool_use_block("query_accounts", {"status": "ACTIVE"}, id="t1"),
+                ],
+                stop_reason="tool_use",
+            ),
+            fake_response([text_block("Found 3 active accounts.")], stop_reason="end_turn"),
+        ]
+        mock_client = types.SimpleNamespace(messages=types.SimpleNamespace(create=AsyncMock(side_effect=responses)))
+
+        with patch("agent.anthropic.AsyncAnthropic", return_value=mock_client):
+            result = await agent.run_agent_sync("find active accounts", "test-key")
+
+        assert result["status"] == "ok"
+        assert result["answer"] == "Found 3 active accounts."
+        assert result["tool_calls"] == [{"name": "query_accounts", "input": {"status": "ACTIVE"}}]
+        assert result["draft_reports"] == []
+        assert "error" not in result
+
+    async def test_collects_draft_report_results_separately_from_other_tool_calls(self):
+        responses = [
+            fake_response(
+                [
+                    tool_use_block("query_accounts", {"status": "ACTIVE"}, id="t1"),
+                ],
+                stop_reason="tool_use",
+            ),
+            fake_response(
+                [
+                    tool_use_block(
+                        "draft_report",
+                        {
+                            "title": "Offboarding: Alice",
+                            "report_type": "offboarding_ticket",
+                            "body_markdown": "...",
+                        },
+                        id="t2",
+                    )
+                ],
+                stop_reason="tool_use",
+            ),
+            fake_response([text_block("Drafted 1 offboarding ticket.")], stop_reason="end_turn"),
+        ]
+        mock_client = types.SimpleNamespace(messages=types.SimpleNamespace(create=AsyncMock(side_effect=responses)))
+
+        with patch("agent.anthropic.AsyncAnthropic", return_value=mock_client):
+            result = await agent.run_agent_sync("draft an offboarding ticket", "test-key")
+
+        assert result["status"] == "ok"
+        assert len(result["tool_calls"]) == 2
+        assert len(result["draft_reports"]) == 1
+        assert result["draft_reports"][0]["title"] == "Offboarding: Alice"
+        assert result["draft_reports"][0]["status"] == "DRAFT - not submitted to any real system"
+
+    async def test_error_run_reports_status_error_with_no_answer(self):
+        # Always responds with another tool call, never a final answer -
+        # run_agent_sync must surface the MAX_TURNS error honestly rather
+        # than returning status "ok" with a missing/empty answer.
+        always_tool_use = fake_response([tool_use_block("query_accounts", {})], stop_reason="tool_use")
+        mock_client = types.SimpleNamespace(
+            messages=types.SimpleNamespace(create=AsyncMock(return_value=always_tool_use))
+        )
+
+        with patch("agent.anthropic.AsyncAnthropic", return_value=mock_client):
+            result = await agent.run_agent_sync("loop forever", "test-key")
+
+        assert result["status"] == "error"
+        assert result["answer"] is None
+        assert str(agent.MAX_TURNS) in result["error"]
+
+    async def test_unknown_dataset_id_reports_status_error(self):
+        mock_client = types.SimpleNamespace(messages=types.SimpleNamespace(create=AsyncMock()))
+
+        with patch("agent.anthropic.AsyncAnthropic", return_value=mock_client):
+            result = await agent.run_agent_sync("query my data", "test-key", dataset_id="does-not-exist")
+
+        assert result["status"] == "error"
+        assert result["answer"] is None
+        mock_client.messages.create.assert_not_called()

@@ -1,0 +1,150 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "OpsPilot Agent Connector",
+    "description": "Calls OpsPilot's agentic IT-ops assistant (Claude API tool-use loop) and returns a single aggregated result: a final answer plus any drafted offboarding/hygiene/SLA-risk report artifacts. Names, emails, and usernames are redacted before reaching Claude and rehydrated in this response - see the OpsPilot README's Honesty notes for exact scope.",
+    "version": "1.0.0"
+  },
+  "host": "REPLACE_WITH_YOUR_DEPLOYED_HOST",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/chat-sync": {
+      "post": {
+        "summary": "Run OpsPilot agent",
+        "description": "Runs the OpsPilot tool-use loop to completion against the bundled demo dataset or a previously-uploaded dataset, and returns the final answer plus any drafted report artifacts. This blocks until the loop finishes (typically a few seconds, longer for multi-step requests that draft several artifacts) - there is no live progress feed on this endpoint, unlike the browser demo's trace panel.",
+        "operationId": "RunOpsPilotAgent",
+        "x-ms-summary": "Run OpsPilot agent",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ChatRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ChatSyncResult"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ChatRequest": {
+      "type": "object",
+      "required": [
+        "message",
+        "api_key"
+      ],
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "The ticket text or request for OpsPilot to act on, e.g. a new ticket's summary and description.",
+          "x-ms-summary": "Message",
+          "x-ms-visibility": "important"
+        },
+        "api_key": {
+          "type": "string",
+          "description": "An Anthropic API key. Passed per-request today, matching OpsPilot's current design - see the connector README for a note on moving this to connection-level auth instead.",
+          "x-ms-summary": "Anthropic API key",
+          "x-ms-visibility": "important"
+        },
+        "dataset_id": {
+          "type": "string",
+          "description": "Optional. Omit to run against the bundled synthetic demo dataset. Provide the id returned by a prior /api/upload call to run against an uploaded dataset instead.",
+          "x-ms-summary": "Dataset ID",
+          "x-ms-visibility": "advanced"
+        }
+      }
+    },
+    "ToolCall": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The tool OpsPilot called, e.g. query_accounts, query_tickets, or draft_report."
+        },
+        "input": {
+          "type": "object",
+          "description": "The arguments OpsPilot passed to that tool call."
+        }
+      }
+    },
+    "DraftReport": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "reportType": {
+          "type": "string",
+          "description": "One of offboarding_ticket, sla_risk_report, or account_hygiene_report."
+        },
+        "body": {
+          "type": "string",
+          "description": "The full drafted artifact content, in markdown - this is what a flow would post into Teams, email, or a ticketing system."
+        },
+        "relatedIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "draftedAt": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "Always states this is a draft only - OpsPilot never submits to a real system itself."
+        }
+      }
+    },
+    "ChatSyncResult": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "\"ok\" or \"error\". A flow should branch on this field, not on the HTTP status code - this endpoint returns HTTP 200 even when status is \"error\" (e.g. an invalid API key or the agent hitting its turn limit), since that's a normal, expected outcome to handle, not a transport failure."
+        },
+        "answer": {
+          "type": "string",
+          "description": "The agent's final answer text. Null when status is \"error\"."
+        },
+        "tool_calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ToolCall"
+          },
+          "description": "Every tool call the agent made, in order - useful for a flow that wants to log or branch on what actually happened."
+        },
+        "draft_reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DraftReport"
+          },
+          "description": "Every draft_report artifact the agent produced during this run, if any."
+        },
+        "error": {
+          "type": "string",
+          "description": "Present only when status is \"error\" - a human-readable description of what went wrong."
+        }
+      }
+    }
+  }
+}
