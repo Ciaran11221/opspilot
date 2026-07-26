@@ -28,12 +28,11 @@ from typing import Any
 
 import csv_ingest
 import dataset_store
+from agent import run_agent, run_agent_sync
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
-from agent import run_agent, run_agent_sync
 
 app = FastAPI(title="OpsPilot")
 
