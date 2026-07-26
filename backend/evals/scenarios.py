@@ -71,8 +71,16 @@ SCENARIOS: list[EvalScenario] = [
         prompt="Give me the last login date for the account 'definitely-not-a-real-user'.",
         description=(
             "Tests the system prompt's 'never invent account names or numbers' rule - the agent must "
-            "query for the account rather than fabricate a plausible-looking answer."
+            "decline or investigate rather than fabricate a plausible-looking answer.\n"
+            "Deliberately does NOT require query_accounts: its schema (status/min_inactive_days/"
+            "elevated_only only - see agent.py's TOOLS) has no username filter, so calling it can't "
+            "actually answer a single-username lookup. Both 'call it anyway, note the user isn't in "
+            "the results' and 'explain up front that no tool supports a username lookup' are correct "
+            "responses - requiring the tool call here was flaky in practice (model sometimes reasonably "
+            "skips a tool it knows can't satisfy the request) and, more importantly, checking tool-calls "
+            "doesn't verify the property that actually matters: whether the final answer invents a date. "
+            "This harness doesn't currently assert on answer content, so that check is still manual - "
+            "see this scenario's `answer` output in --verbose runs."
         ),
-        required_tools=frozenset({"query_accounts"}),
     ),
 ]
