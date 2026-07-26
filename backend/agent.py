@@ -23,7 +23,8 @@ from typing import Any, cast
 import anthropic
 import dataset_store
 from anthropic import types as anthropic_types
-from tools import DEMO_TOOL_IMPLEMENTATIONS, build_tool_implementations
+from redact import RedactionMap, redact_accounts, redact_tickets
+from tools import DEMO_ACCOUNTS, DEMO_TICKETS, NOW_DEMO, build_tool_implementations
 
 MODEL = os.environ.get("OPSPILOT_MODEL", "claude-haiku-4-5-20251001")
 MAX_TURNS = 6
@@ -132,6 +133,12 @@ TOOLS = [
             },
             "required": ["title", "report_type", "body_markdown"],
         },
+        # Marks the end of the tools block as a cache breakpoint. The tools
+        # array is byte-identical on every turn of every request, so caching
+        # it here means turns 2+ (and subsequent requests within the cache
+        # TTL) read it from cache instead of paying full input-token price
+        # for these schemas every single call.
+        "cache_control": {"type": "ephemeral"},
     },
 ]
 
@@ -184,29 +191,59 @@ async def run_agent(
     client = anthropic.AsyncAnthropic(api_key=api_key)
     messages: list[anthropic_types.MessageParam] = [_message("user", user_message)]
 
-    system_prompt = SYSTEM_PROMPT
+    # One RedactionMap per request: real PII (emails, usernames, display
+    # names, assignees) is tokenized before the dataset is ever handed to
+    # the tool implementations, so Claude only ever reasons over tokens -
+    # never real values. The same map rehydrates tokens back to real values
+    # in every event yielded to the frontend, below. Fresh per request (not
+    # cached at module scope) so token assignment can't leak between users.
+    rmap = RedactionMap()
+
+    # System prompt as a list of cacheable content blocks rather than one
+    # string. SYSTEM_PROMPT alone is byte-identical across every request
+    # (demo or uploaded), so it gets its own cache breakpoint - a cache hit
+    # regardless of dataset. The optional addendum below is identical across
+    # every turn *within* one request, so turns 2+ of that request hit cache
+    # too, even though it differs between demo and uploaded-dataset requests.
+    system_blocks: list[dict[str, Any]] = [
+        {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}
+    ]
     if dataset_id:
         dataset = dataset_store.get_dataset(dataset_id)
         if dataset is None:
             yield _event("error", text="That uploaded dataset is no longer available - please re-upload.")
             return
-        tool_implementations = build_tool_implementations(dataset["accounts"], dataset["tickets"])
-        system_prompt = SYSTEM_PROMPT + (
-            "\n\nNote: you are running against data the user uploaded themselves (not the built-in demo "
-            "dataset). It has been normalized from their CSV but may have gaps - some records may be "
-            "missing fields the export didn't include. Tool results may include a 'note' field flagging "
-            "rows that were skipped for a given filter; mention this to the user if it's relevant to their "
-            "question rather than silently ignoring it."
-        )
+        redacted_accounts = redact_accounts(dataset["accounts"], rmap)
+        redacted_tickets = redact_tickets(dataset["tickets"], rmap)
+        tool_implementations = build_tool_implementations(redacted_accounts, redacted_tickets)
+        system_blocks.append({
+            "type": "text",
+            "text": (
+                "Note: you are running against data the user uploaded themselves (not the built-in demo "
+                "dataset). It has been normalized from their CSV but may have gaps - some records may be "
+                "missing fields the export didn't include. Tool results may include a 'note' field flagging "
+                "rows that were skipped for a given filter; mention this to the user if it's relevant to "
+                "their question rather than silently ignoring it.\n\n"
+                "Names, emails, and usernames have been replaced with tokens like [PERSON_1] and [EMAIL_2] "
+                "before reaching you - this is a privacy layer, not missing data. Always use these tokens "
+                "exactly as given (in filters, in drafted reports, everywhere) rather than inventing or "
+                "guessing a real name or address; they are rehydrated back to real values for the human "
+                "user automatically after you respond."
+            ),
+            "cache_control": {"type": "ephemeral"},
+        })
     else:
-        tool_implementations = DEMO_TOOL_IMPLEMENTATIONS
+        redacted_accounts = redact_accounts(DEMO_ACCOUNTS, rmap)
+        redacted_tickets = redact_tickets(DEMO_TICKETS, rmap)
+        tool_implementations = build_tool_implementations(redacted_accounts, redacted_tickets, NOW_DEMO)
+
 
     try:
         for turn in range(MAX_TURNS):
             response = await client.messages.create(
                 model=MODEL,
                 max_tokens=4096,
-                system=system_prompt,
+                system=cast(list[anthropic_types.TextBlockParam], system_blocks),
                 tools=cast(list[anthropic_types.ToolUnionParam], TOOLS),
                 messages=messages,
             )
@@ -222,10 +259,12 @@ async def run_agent(
                     # below, as a "final" event - emitting it here too would
                     # show the same text twice in the trace panel.
                     if response.stop_reason == "tool_use":
-                        yield _event("plan", text=block.text.strip(), turn=turn)
+                        yield _event("plan", text=rmap.rehydrate(block.text.strip()), turn=turn)
                     assistant_content.append({"type": "text", "text": block.text})
                 elif block.type == "tool_use":
-                    yield _event("tool_call", name=block.name, input=block.input, turn=turn, tool_use_id=block.id)
+                    yield _event(
+                        "tool_call", name=block.name, input=rmap.rehydrate(block.input), turn=turn, tool_use_id=block.id
+                    )
                     tool_calls.append(block)
                     assistant_content.append(
                         {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
@@ -253,7 +292,9 @@ async def run_agent(
                             result = impl(**call.input)
                         except Exception as exc:  # e.g. a truncated call missing a required field
                             result = {"error": str(exc)}
-                    yield _event("tool_result", name=call.name, result=result, turn=turn, tool_use_id=call.id)
+                    yield _event(
+                        "tool_result", name=call.name, result=rmap.rehydrate(result), turn=turn, tool_use_id=call.id
+                    )
                 yield _event(
                     "error",
                     text=(
@@ -266,7 +307,7 @@ async def run_agent(
 
             if response.stop_reason != "tool_use":
                 final_text = "".join(b.text for b in response.content if b.type == "text")
-                yield _event("final", text=final_text)
+                yield _event("final", text=rmap.rehydrate(final_text))
                 return
 
             tool_result_content = []
@@ -280,7 +321,9 @@ async def run_agent(
                     except Exception as exc:  # surfaced to the trace panel, not swallowed
                         result = {"error": str(exc)}
 
-                yield _event("tool_result", name=call.name, result=result, turn=turn, tool_use_id=call.id)
+                yield _event(
+                    "tool_result", name=call.name, result=rmap.rehydrate(result), turn=turn, tool_use_id=call.id
+                )
                 tool_result_content.append({
                     "type": "tool_result",
                     "tool_use_id": call.id,
